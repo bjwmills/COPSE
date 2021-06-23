@@ -2,9 +2,7 @@
 
 Carbon-Oxygen-Phosphorus-Sulfur-Evolution
 
-As used in Tostevin and Mills (2020) Interface Focus
-
-Coded by Benjamin JW Mills // b.mills@leeds.ac.uk
+COPSE was developed by Noam Bergman in 2003/2004. Several versions now exist. This version of the COPSE code is lighlty updated from Tostevin and Mills (2020) Interface Focus. 
 
 ## Contents:
 
