@@ -1,8 +1,8 @@
 function dy = COPSE_equations(t,y)
 
-%%%%%%% COPSE for MATLAB
-%%%%%%% ported by B Mills, 2013
-%%%%%%% 2015 development version
+%%%% COPSE V2.1 (Carbon Oxygen Phosphorus Sulfur Evolution)
+%%%% As used in Tostevin and Mills (2020) Interface Focus
+%%%% Coded by Benjamin JW Mills // b.mills@leeds.ac.uk
 
 
 %%%%%%% setup dy array
@@ -45,7 +45,6 @@ delta_C = y(13)/y(6);
 delta_GYP  = y(15)/y(8);
 delta_PYR  = y(14)/y(7);
 
-
 %%%%%%% atmospheric fraction of total CO2, atfrac(A)
 atfrac0 = 0.01614 ;
 %%%%%%% constant
@@ -53,11 +52,9 @@ atfrac0 = 0.01614 ;
 %%%%%%% variable
 atfrac = atfrac0 * (A/pars.A0) ;
 
-
 %%%%%%%% calculations for pCO2, pO2
 RCO2 = (A/pars.A0)*(atfrac/atfrac0) ;
 CO2atm = RCO2*(280e-6) ;
-
 
 %%%%% mixing ratio of oxygen (not proportional to O reservoir)
 mrO2 = ( O/pars.O0 )  /   ( (O/pars.O0)  + pars.copsek16 ) ;
@@ -72,12 +69,10 @@ RO2 =  O/pars.O0 ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%% COPSE Reloaded forcing set
-Ca_reloaded = interp1qr( 1e6 * forcings.t', forcings.Ca' , t ) ;
 CP_reloaded = interp1qr( 1e6 * forcings.t', forcings.CP' , t ) ;
 E_reloaded = interp1qr( 1e6 * forcings.t', forcings.E' , t ) ;
 W_reloaded = interp1qr( 1e6 * forcings.t', forcings.W' , t ) ;
 coal_reloaded = interp1qr( 1e6 * forcings.t', forcings.coal' , t ) ;
-epsilon_reloaded = interp1qr( 1e6 * forcings.t', forcings.epsilon' , t ) ;
 
 %%%% Additional forcings
 GA_revised = interp1qr( forcings.GA_revised(:,1) , forcings.GA_revised(:,2) , t ) ;
@@ -99,12 +94,9 @@ pyrburialfrac = 0.8 ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 UPLIFT = U_smooth2018 ;
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DEGASS = D_reloaded ;
-% DEGASS = D_PM_VDM ;
 DEGASS = D_sbz_rift ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % W = 1 ;
@@ -117,32 +109,23 @@ EVO = E_reloaded ;
 CPland_relative = CP_reloaded ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EPSILON = 1 ;
-% EPSILON = epsilon_reloaded ;
 EPSILON = epsilon_new ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Bforcing = interp1qr([-1000 -200 -150 0],[0.75 0.75 1 1],t_geol) ;
 Bforcing = interp1qr([-1000 -150 -100 0]',[0.75 0.75 1 1]',t_geol) ;
 % Bforcing = B_reloaded ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SOLAR = CK_solar*1368;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PG = 1 ;
-% PG = PG_reloaded ;
-% PG = PG_revised ;
 PG = cryo_PG ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % BAS_AREA = 1 ;
-% BAS_AREA = BA_reloaded ;
 BAS_AREA = GR_BA ;
-% BAS_AREA = GR_BA + 1.*ordo_extra_BA ;
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 CARB_AREA = 1 ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GRAN_AREA = 1 ;
-% GRAN_AREA = GA_reloaded ;
 GRAN_AREA = GA_revised ;
-% GRAN_AREA = GA_revised_static ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ORG_AREA = 1 ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -162,7 +145,6 @@ carbconst = 0.9 ;
 % carbconst = 1 ;
 
 %%%% reductant input
-% REDUCT_FORCE = interp1qr([-1000e6 0]',[1.5 1]',t) ;
 REDUCT_FORCE = DEGASS;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,9 +162,8 @@ end
 %%%%%%%%%%%%%%%%%   Calculate variables   %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 %%%% Berner temperature for COPSE reloaded, climate sensitivity variable
-%%%% use Earth system sensitivity taking into account ince, veg albedo e.g. Lunt papers
+%%%% use Earth system sensitivity 
 climsens = 5 ; 
 %%%% temperature for weathering takes into account land surface temperature
 %%%% GEOG
@@ -190,14 +171,14 @@ TEMP_land = 288 + climsens*(log(RCO2)/log(2)) - 7.4*(t_geol/-570) + GEOG ;
 %%%% Global average surface tmeperature doesn't take into acocunt GEOG
 TEMP_gast = 288 + climsens*(log(RCO2)/log(2)) - 7.4*(t_geol/-570) ; 
 
-%%%% relcalculate temp for surface processes assuming less T response
+%%%% relcalculate low lat temp for surface processes 
 tgrad = 0.66 ;
 % tgrad = 1 ;
 tc = 288*(1-tgrad) ;
-Tsurf = TEMP_land*tgrad + tc  ;
+Tsurf = TEMP_land*tgrad + tc + 10 ; %%% low lat temp 25C at present
 % Tsurf = TEMP ;
 
-%%%% effect of temp on VEG %%%% fixed
+%%%% effect of temp on VEG 
 V_T = 1 - (( (Tsurf - 298)/25 )^2) ;
 
 %%%% effect of CO2 on VEG
@@ -221,17 +202,14 @@ firef = pars.kfire/(pars.kfire - 1 + ignit) ;
 %%% Mass of terrestrial biosphere
 VEG = V_npp * firef ;
 
-
 %%%%%% basalt and granite temp dependency - direct and runoff
-f_T_bas =  exp(0.0608*(Tsurf-288)) * ( (1 + 0.038*(Tsurf - 288))^0.65 ) ; %%% 42KJ/mol
-f_T_gran =  exp(0.0724*(Tsurf-288)) * ( (1 + 0.038*(Tsurf - 288))^0.65 ) ; %%% 50 KJ/mol
-g_T = 1 + 0.087*(Tsurf - 288) ;
-
+f_T_bas =  exp(0.0608*(Tsurf-298)) * ( (1 + 0.038*(Tsurf - 298))^0.65 ) ; %%% 42KJ/mol
+f_T_gran =  exp(0.0724*(Tsurf-298)) * ( (1 + 0.038*(Tsurf - 298))^0.65 ) ; %%% 50 KJ/mol
+g_T = 1 + 0.087*(Tsurf - 298) ;
 
 %%%% COPSE reloaded fbiota
 V = VEG ;
 f_biota = ( 1 - min( V*W , 1 ) ) * pars.plantenhance * (RCO2^0.5) + (V*W) ;
-
 
 %%%% basalt and granite weathering
 basw = pars.k_basw * BAS_AREA * PG * f_biota * f_T_bas ;
@@ -260,16 +238,14 @@ pulse_pyr = pars.k_pyrw*PYR_INPUT ;
 f_T_sfw = exp(0.0608*(TEMP_gast-288)) ; 
 sfw = pars.k_sfw * f_T_sfw * DEGASS ; %%% assume spreading rate follows degassing here
 
-
+%%%% carbonate burial via alkalinity balance
 mccb = carbw + silw ;
-
 
 %%%%%%% Degassing 
 ocdeg = pars.k_ocdeg*DEGASS*(G/pars.G0) ;
 ccdeg = pars.k_ccdeg*DEGASS*(C/pars.C0)*Bforcing ;
 pyrdeg = pars.k_pyrdeg*(PYR/pars.PYR0)*DEGASS;
 gypdeg = pars.k_gypdeg*(GYP/pars.GYP0)*DEGASS;
-
 
 %%%% COPSE reloaded P weathering
 pfrac_silw = 0.8 ;
@@ -279,16 +255,11 @@ pfrac_oxidw = 0.06 ;
 %%%% COPSE reloaded formula
 phosw = EPSILON * pars.k_phosw*( (pfrac_silw)*( silw/pars.k_silw )  +   (pfrac_carbw)*( carbw/pars.k_carbw ) +  (pfrac_oxidw)*(  oxidw/ pars.k_oxidw )  )  ;
 
-
 %%%% COPSE reloaded
 k_aq = 0.8 ;
-% pland = pars.k_landfrac * VEG * phosw * ( k_aq*UPLIFT + ( 1 - k_aq )*COALF ) ;
 pland = pars.k_landfrac * VEG * phosw * ( k_aq + ( 1 - k_aq )*COALF ) ;
-
-
 pland0 = pars.k_landfrac*pars.k_phosw;
 psea = phosw - pland ;
-
 
 %%%% convert total reservoir moles to micromoles/kg concentration    
 Pconc = ( P/pars.P0 ) * 2.2 ;
@@ -308,13 +279,10 @@ CB = interp1qr([0 1]',[1.2 1]',f_biot) ;
 mocb = pars.k_mocb*((newp/pars.newp0)^pars.b) * CB ;
 locb = pars.k_locb*(pland/pland0)*CPland_relative  ;
 
-
 % PYR burial function (COPSE)
 fox= 1/(O/pars.O0) ; 
-%%%% mpsb scales with mocb so no extra uplift dependence
-% mpsb = pars.k_mpsb*(S/pars.S0)*fox*(mocb/pars.k_mocb)+ pyrburialfrac*(evapdis + pulse_pyr) ;
-% mgsb = pars.k_mgsb*(S/pars.S0)*CAL + (1-pyrburialfrac)*(evapdis + pulse_pyr) ;
 
+%%%% sulfur burial
 mpsb = pars.k_mpsb*(S/pars.S0)*fox*(mocb/pars.k_mocb)+ pyrburialfrac*(evapdis + pulse_pyr) ;
 mgsb = pars.k_mgsb*(S/pars.S0) + (1-pyrburialfrac)*(evapdis + pulse_pyr) ;
 
@@ -371,8 +339,8 @@ GYPsub = 0 ;
 
 %%% Phosphate
 CPDOC = 250 ;
-% dy(1) = psea - mopb - capb - fepb + ( DOC_ox / CPDOC ) ;
-dy(1) = psea - mopb - capb - fepb  ;
+dy(1) = psea - mopb - capb - fepb + ( DOC_ox / CPDOC ) ;
+% dy(1) = psea - mopb - capb - fepb  ;
 
 %%% Oxygen
 dy(2) = locb + mocb - oxidw  - ocdeg   + 2*(mpsb - pyrw  - pyrdeg - pulse_pyr) - DOC_ox - reductant_input ;
@@ -395,12 +363,6 @@ dy(7) = mpsb - pyrw - pyrdeg - pulse_pyr - PYRsub;
 
 %%% Buried gypsum S 
 dy(8) = mgsb - gypw - gypdeg - evapdis - GYPsub ;
-
-%%% iterated temperature
-% dy(9) = dy_temp ;
-
-%%% CAL
-% dy(10) = silw + carbw + gypw - mccb -mgsb;
 
 %%%% Nitrate
 dy(11) = nfix - denit - monb;
@@ -483,19 +445,6 @@ Sr_sedb = pars.k_Sr_sedb * ( mccb/pars.k_mccb ) * ( OSr/pars.OSr0 ) ;
 delta_OSr = y(19) / y(18) ;
 delta_SSr = y(21) / y(20) ;
 
-%%%% constant fractionations
-% dSr_bas = 0.705 ;
-% dSr_gran = 0.715 ;
-% dSr_mantle = 0.703 ;
-
-
-%%% updated values
-% RbSr_bas = 0.066 ;
-% RbSr_gran = 0.30 ;
-% RbSr_mantle = 0.066 ;
-% RbSr_carbonate = 0.5 ;
-
-
 % %%%% original frac
 RbSr_bas = 0.1 ;
 RbSr_gran = 0.26 ;
@@ -525,7 +474,7 @@ dy(21) = Sr_sedb*delta_OSr - Sr_sedw*delta_SSr - Sr_metam*delta_SSr + SSr*lambda
 %%%% DOC reservoir
 dy(22) = - DOC_ox ;
 
-%%%% uranium system
+%%%% uranium system (UNFINISHED)
 U_riv = 4.79e7 * (silw/pars.k_silw) ;
 U_hydro = 5.7e6 * DEGASS * (U/pars.U0) ;
 U_anox = 6.2e6 * (ANOX/0.0025) * (U/pars.U0) ;
@@ -551,7 +500,6 @@ iso_res_S = S*d34s_S + PYR*delta_PYR + GYP*delta_GYP ;
 
 
 %%%%% istopic composition of inputs
-
 d_in = ( oxidw*delta_G + ocdeg*delta_G + ccdeg*delta_C + carbw*delta_C + DOC_ox*-30 + reductant_input*-5 ) / ( oxidw + ocdeg + ccdeg + carbw + DOC_ox + reductant_input )  ;
 
 
