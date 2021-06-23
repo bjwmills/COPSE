@@ -1,6 +1,6 @@
-%%%%%% COPSE for MATLAB
-%%%%%%% ported by B Mills, 2013
-%%%%%%% 2017 development version
+%%%% COPSE V2.1 (Carbon Oxygen Phosphorus Sulfur Evolution)
+%%%% As used in Tostevin and Mills (2020) Interface Focus
+%%%% Coded by Benjamin JW Mills // b.mills@leeds.ac.uk
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%   Define parameters   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -122,7 +122,6 @@ function run = COPSE_frontend(S)
     pars.dpyrb = -35 ;
     pars.DOC_res_0 = 3e18 * 40 ;
     
-
     %reservoir present day sizes (mol)
     pars.P0 = 3.1*10^15 ;
     pars.O0 = 3.7*10^19 ;
@@ -143,7 +142,8 @@ function run = COPSE_frontend(S)
     pars.b = 2 ; %marine organic carbon burial dependency on new production
 
     %%%%%%% weathering enhancement factor prior to vascular plant colonisation
-    pars.plantenhance = 0.15 ;
+%     pars.plantenhance = 0.15 ;
+    pars.plantenhance = 0.5 ;
 
     %%%%%%% transport limitation of weathering. 0 = fixed limit, 1 = rate
     %%%%%%% scales with global erosion/uplift rate
@@ -182,9 +182,6 @@ function run = COPSE_frontend(S)
     %%%% simple smoothing
     forcings.usmooth_2018 = xlsread('new_forcings/usmooth_2018.xlsx','','','basic') ;
     forcings.usmooth_2018(:,1) = forcings.usmooth_2018(:,1)*1e6 ; %%% correct Myr
-    %%%% Degassing from Paleomap+VDM sbz length
-    forcings.D_PALEOMAP_VDM = xlsread('new_forcings/D_paleomap_vdm_combined.xlsx','','','basic') ;
-    forcings.D_PALEOMAP_VDM(:,1) = forcings.D_PALEOMAP_VDM(:,1)*1e6 ; %%% correct Myr
     %%%% extended granite area
     forcings.GA_revised = xlsread('new_forcings/GA_revised.xlsx','','','basic') ;
     forcings.GA_revised(:,1) = forcings.GA_revised(:,1)*1e6 ; %%% correct Myr
@@ -291,7 +288,7 @@ function run = COPSE_frontend(S)
     if isempty(Gtune) == 1
 
 %     outputs = [ 0.5 1.2 2.5 1 0.1 1 3] ;
-    outputs = [ 0.33 1 1.5 0.5 0.1 1 3] ;
+    outputs = [ 0.33 1 2 0.25 0.1 1 3] ;
 
         pars.gstart = pars.G0 * outputs(1) ;
         pars.cstart = pars.C0 * outputs(2) ;
@@ -339,15 +336,9 @@ function run = COPSE_frontend(S)
     [rawoutput.T,rawoutput.Y] = ode15s(@COPSE_equations,[pars.whenstart pars.whenend],pars.startstate,options);
 
 
-
-
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%   Postprocessing   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
 
     %%%% size of output 
     pars.output_length = length(rawoutput.T) ;
@@ -371,7 +362,6 @@ function run = COPSE_frontend(S)
         fprintf('S*isotope anomoly (percent): %e \n', Sisoano ) 
 
     end
-
 
 
     %%%%%%%%% print final model states using final state for each timepoint
