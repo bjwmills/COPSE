@@ -1,7 +1,9 @@
 # COPSE
 
 Carbon-Oxygen-Phosphorus-Sulfur-Evolution
+
 As used in Tostevin and Mills (2020) Interface Focus
+
 Coded by Benjamin JW Mills // b.mills@leeds.ac.uk
 
 Contents:
