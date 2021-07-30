@@ -2,7 +2,7 @@
 
 Carbon-Oxygen-Phosphorus-Sulfur-Evolution
 
-COPSE was developed by Noam Bergman in 2003/2004. Several versions now exist. This version of the COPSE code is lighlty updated from Tostevin and Mills (2020) Interface Focus. 
+COPSE was developed by Noam Bergman in 2003. Several versions now exist. This version of the COPSE code is lighlty updated from Tostevin and Mills (2020) Interface Focus. 
 
 ## Contents:
 
