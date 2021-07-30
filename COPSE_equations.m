@@ -338,7 +338,7 @@ GYPsub = 0 ;
 
 
 %%% Phosphate
-CPDOC = 250 ;
+CPDOC = 1000 ;
 dy(1) = psea - mopb - capb - fepb + ( DOC_ox / CPDOC ) ;
 % dy(1) = psea - mopb - capb - fepb  ;
 
