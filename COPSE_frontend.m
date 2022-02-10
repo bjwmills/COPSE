@@ -1,12 +1,12 @@
-%%%% COPSE V2.1 (Carbon Oxygen Phosphorus Sulfur Evolution)
-%%%% As used in Tostevin and Mills (2020) Interface Focus
+%%%% COPSE V2.11 (Carbon Oxygen Phosphorus Sulfur Evolution)
 %%%% Coded by Benjamin JW Mills // b.mills@leeds.ac.uk
+%%%% Revised by Yinggang Zhang 2021
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%   Define parameters   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function run = COPSE_frontend(S)
+function run = COPSE_frontend(runcontrol)
 
     %%%%%%% remove structures from pervious runs 
     clear stepnumber
@@ -38,7 +38,7 @@ function run = COPSE_frontend(S)
     global Stune
     
     %%%%%% check for sensitivity analysis
-    if S >= 1
+    if runcontrol >= 1
         sensanal = 1 ;
         plotrun = 0 ;
         pars.telltime = 0 ;
@@ -47,6 +47,7 @@ function run = COPSE_frontend(S)
         plotrun = 1 ;
         pars.telltime = 1 ;
     end
+    pars.runcontrol = runcontrol;
     
     %%%%%%% starting to load params
     if sensanal == 0 
@@ -70,7 +71,13 @@ function run = COPSE_frontend(S)
     pars.k_silw = pars.k_mccb - pars.k_carbw ;
     basfrac = 0.3 ;
     pars.k_granw = pars.k_silw * (1-basfrac) ;
+%     pars.k_inter_granw = pars.k_granw * 0.95;
+%     pars.k_island_granw = pars.k_granw * 0.05 ;
+
     pars.k_basw = pars.k_silw * basfrac ;
+    %%% internal mountain basf: 70% coming from internal mountains; 
+%     pars.k_inter_basw = pars.k_basw * 0.60;
+%     pars.k_island_basw = pars.k_basw - pars.k_inter_basw;
 
     %%%% S cycle
     pars.k_mpsb = 0.7e12 ;
@@ -143,7 +150,7 @@ function run = COPSE_frontend(S)
 
     %%%%%%% weathering enhancement factor prior to vascular plant colonisation
 %     pars.plantenhance = 0.15 ;
-    pars.plantenhance = 0.5 ;
+    pars.plantenhance = 0.15 ;
 
     %%%%%%% transport limitation of weathering. 0 = fixed limit, 1 = rate
     %%%%%%% scales with global erosion/uplift rate
@@ -195,6 +202,11 @@ function run = COPSE_frontend(S)
     forcings.GR_BA = xlsread('new_forcings/GR_BA.xlsx','','','basic') ;
     forcings.GR_BA(:,1) = forcings.GR_BA(:,1)*1e6 ; %%% correct Myr
 
+    %%%% new P contributions from ISLAND MOUNTAIN AREA for the Cambrian
+    %%%% Period
+    forcings.IMA_P = xlsread('new_forcings/IMA_P.xlsx','','','basic') ;
+    forcings.IMA_P(:,1) = forcings.IMA_P(:,1)*1e6 ; %%% correct Myr
+
     %%%%% finished loading forcings
     if sensanal == 0 
         fprintf('Done: ')
@@ -234,7 +246,7 @@ function run = COPSE_frontend(S)
     pars.whenend = 0 ;
 
     % pars.plotrange = [-620 -590] ;
-    pars.plotrange = [-800 0] ;
+    pars.plotrange = [-560 -460] ;
 
     %%%%%%% set number of model steps to take before beiling out
     pars.bailnumber = 1e5;
@@ -288,7 +300,7 @@ function run = COPSE_frontend(S)
     if isempty(Gtune) == 1
 
 %     outputs = [ 0.5 1.2 2.5 1 0.1 1 3] ;
-    outputs = [ 0.33 1 2 0.25 0.1 1 3] ;
+        outputs = [ 0.33 1 2 0.25 0.1 1 3] ;
 
         pars.gstart = pars.G0 * outputs(1) ;
         pars.cstart = pars.C0 * outputs(2) ;
@@ -386,6 +398,24 @@ function run = COPSE_frontend(S)
     run.state = state ;
     run.pars = pars ;
     run.forcings = forcings ;
+    
+    %%% save data to csv for futher plotting
+%     time_start = -560;
+%     time_end = -470;
+%     index_start = find(state.time_myr > time_start,1);
+%     index_end = find(state.time_myr > time_end,1);
+% 
+%     celldata = cell(index_end-index_start,length(field_names));
+%     cellnamedata = cell(1,length(field_names));
+%     field_names = fieldnames(state) ;
+%     for numfields = 1:length(field_names)
+%         for row_num = index_start:index_end
+%             eval([' celldata{row_num-index_start+1,numfields } = state.' char( field_names(numfields)) ' (row_num); '])
+%         end
+%         cellnamedata{1,numfields } = field_names(numfields);
+%     end
+%     csvwrite('output.csv' , celldata);
+%     save 'cellname.mat' cellnamedata  
     
     if sensanal == 0
         %%%%%% done message

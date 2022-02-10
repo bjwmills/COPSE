@@ -36,8 +36,12 @@ DOC_res = y(22) ;
 U = y(23) ;
 d238U_sw = y(24) / y(23) ;
 
-%%%% geological time in Ma
-t_geol = t*(1e-6) ;
+%%%% geological time in Ma (runcontrol = -2 sets a present day run)
+if pars.runcontrol == -2
+    t_geol = 0;
+else
+    t_geol = t*(1e-6) ;
+end
 
 %%%%%%% calculate isotopic fractionation of reservoirs
 delta_G = y(12)/y(5);
@@ -55,6 +59,7 @@ atfrac = atfrac0 * (A/pars.A0) ;
 %%%%%%%% calculations for pCO2, pO2
 RCO2 = (A/pars.A0)*(atfrac/atfrac0) ;
 CO2atm = RCO2*(280e-6) ;
+CO2ppm= CO2atm*280 ;
 
 %%%%% mixing ratio of oxygen (not proportional to O reservoir)
 mrO2 = ( O/pars.O0 )  /   ( (O/pars.O0)  + pars.copsek16 ) ;
@@ -69,22 +74,36 @@ RO2 =  O/pars.O0 ;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%% COPSE Reloaded forcing set
-CP_reloaded = interp1qr( 1e6 * forcings.t', forcings.CP' , t ) ;
-E_reloaded = interp1qr( 1e6 * forcings.t', forcings.E' , t ) ;
-W_reloaded = interp1qr( 1e6 * forcings.t', forcings.W' , t ) ;
-coal_reloaded = interp1qr( 1e6 * forcings.t', forcings.coal' , t ) ;
+CP_reloaded = interp1qr( forcings.t', forcings.CP' , t_geol ) ;
+E_reloaded = interp1qr( forcings.t', forcings.E' , t_geol ) ;
+W_reloaded = interp1qr( forcings.t', forcings.W' , t_geol ) ;
+coal_reloaded = interp1qr( forcings.t', forcings.coal' , t_geol ) ;
 
 %%%% Additional forcings
-GA_revised = interp1qr( forcings.GA_revised(:,1) , forcings.GA_revised(:,2) , t ) ;
-D_sbz_rift = interp1qr( forcings.D_SBZ_RIFT(:,1) , forcings.D_SBZ_RIFT(:,2) , t ) ;
-U_smooth2018 = interp1qr( forcings.usmooth_2018(:,1) , forcings.usmooth_2018(:,2)./forcings.usmooth_2018(end,2) , t ) ;
-cryo_PG = interp1qr( forcings.cryo_PG(:,1) , forcings.cryo_PG(:,2) , t ) ;
-GR_BA = interp1qr( forcings.GR_BA(:,1) , forcings.GR_BA(:,2) , t ) ;
-epsilon_new = interp1qr([-1000e6 -466e6 -444e6 -411e6 -399e6 0 ]',[0.75 0.75 1.5 1.5 1 1 ]',t) ;
+GA_revised = interp1qr( forcings.GA_revised(:,1) ./ 1e6 , forcings.GA_revised(:,2) , t_geol ) ;
+D_sbz_rift = interp1qr( forcings.D_SBZ_RIFT(:,1) ./ 1e6 , forcings.D_SBZ_RIFT(:,2) , t_geol ) ;
+U_smooth2018 = interp1qr( forcings.usmooth_2018(:,1) ./ 1e6 , forcings.usmooth_2018(:,2)./forcings.usmooth_2018(end,2) , t_geol ) ;
+cryo_PG = interp1qr( forcings.cryo_PG(:,1) ./ 1e6 , forcings.cryo_PG(:,2) , t_geol ) ;
+GR_BA = interp1qr( forcings.GR_BA(:,1) ./ 1e6, forcings.GR_BA(:,2) , t_geol ) ;
+epsilon_new = interp1qr([-1000 -466 -444 -411 -399 0 ]',[0.75 0.75 1.5 1.5 1 1 ]',t_geol) ;
+
+
+%lowest value
+IMA_P_low = interp1qr(forcings.IMA_P(:,1) ./ 1e6,forcings.IMA_P(:,2),t_geol) /31;
+%highest value
+IMA_P_high = interp1qr(forcings.IMA_P(:,1) ./ 1e6,forcings.IMA_P(:,3),t_geol) /31;
+%average value
+IMA_P_ave = interp1qr(forcings.IMA_P(:,1) ./ 1e6,forcings.IMA_P(:,4),t_geol) / 31;
+IMA_P = 0;
+
+%%% island mountain area for the Cambrian
+%island_mountain_area =  interp1qr([-1000 -540 -525 -510 -505 -494 -490 -480 0]',[1 1 3 2 1.5 1.6 1.7 1 1]',t_geol) ;
+%island_mountain_area =  interp1qr([-1000e6 -540e6 -525e6 -510e6 -505e6 -494e6 -490e6 -480e6 0]',[1 1 3 2 1.5 1.6 1.7 1 1]',t) ;
+%island_mountain_area =  interp1qr([-1000 -540 -525 -510 -505 -494 -490 -480 0]',[1 1 60 40 30 32 34 1 1]',t_geol) ;
 
 %%%% S inputs
-GYP_INPUT = interp1qr([-1000e6 -581e6 -580e6 -571e6 -570e6 0]',[0 0 7 7 0 0]',t) ;
-PYR_INPUT = interp1qr([-1000e6 -581e6 -580e6 -571e6 -570e6 0]',[0 0 7 7 0 0]',t) ;
+GYP_INPUT = interp1qr([-1000 -581 -580 -571 -570 0]',[0 0 7 7 0 0]',t_geol) ;
+PYR_INPUT = interp1qr([-1000 -581 -580 -571 -570 0]',[0 0 7 7 0 0]',t_geol) ;
 pyrburialfrac = 0.8 ;
 
 
@@ -202,19 +221,31 @@ firef = pars.kfire/(pars.kfire - 1 + ignit) ;
 %%% Mass of terrestrial biosphere
 VEG = V_npp * firef ;
 
+Tsurf = 298+10;
 %%%%%% basalt and granite temp dependency - direct and runoff
 f_T_bas =  exp(0.0608*(Tsurf-298)) * ( (1 + 0.038*(Tsurf - 298))^0.65 ) ; %%% 42KJ/mol
 f_T_gran =  exp(0.0724*(Tsurf-298)) * ( (1 + 0.038*(Tsurf - 298))^0.65 ) ; %%% 50 KJ/mol
 g_T = 1 + 0.087*(Tsurf - 298) ;
+
 
 %%%% COPSE reloaded fbiota
 V = VEG ;
 f_biota = ( 1 - min( V*W , 1 ) ) * pars.plantenhance * (RCO2^0.5) + (V*W) ;
 
 %%%% basalt and granite weathering
+%basw = pars.k_basw * BAS_AREA * PG * f_biota * f_T_bas  ;
+%%%% baselt weathering is divided into internal land weathering and island
+%%%% weathering
 basw = pars.k_basw * BAS_AREA * PG * f_biota * f_T_bas ;
+%island_basw = pars.k_island_basw * island_mountain_area * PG * f_biota * f_T_bas ;
+
 granw = pars.k_granw * UPLIFT^silconst * GRAN_AREA * PG * f_biota * f_T_gran ;
+% inter_granw = pars.k_inter_granw * UPLIFT^silconst * GRAN_AREA * PG * f_biota * f_T_gran ;
+% island_granw = pars.k_island_granw * UPLIFT^silconst * island_mountain_area * PG * f_biota * f_T_gran ;
+
 %%% silicate weathering
+% basw = inter_basw + island_basw;
+% granw = inter_granw + island_granw;
 silw = basw + granw ;
 
 %%%% carbonate weathering 
@@ -253,7 +284,9 @@ pfrac_carbw = 0.14 ;
 pfrac_oxidw = 0.06 ;
 %%%% p weathering modified for young and ancient reservoirs
 %%%% COPSE reloaded formula
-phosw = EPSILON * pars.k_phosw*( (pfrac_silw)*( silw/pars.k_silw )  +   (pfrac_carbw)*( carbw/pars.k_carbw ) +  (pfrac_oxidw)*(  oxidw/ pars.k_oxidw )  )  ;
+phosw_o = EPSILON * pars.k_phosw*( (pfrac_silw)*( silw/pars.k_silw )  +   (pfrac_carbw)*( carbw/pars.k_carbw ) +  (pfrac_oxidw)*(  oxidw/ pars.k_oxidw )  )  ;
+phosw = phosw_o + IMA_P ;
+
 
 %%%% COPSE reloaded
 k_aq = 0.8 ;
@@ -272,7 +305,8 @@ k_u = 0.4 ;
 ANOX = 1 / ( 1 + exp( -1 * k_anox * ( k_u * (newp/pars.newp0) - (O/pars.O0) ) ) ) ;
 
 %%%% bioturbation forcing
-f_biot = interp1qr([-1000e6 -525e6 -520e6 0]',[0 0 1 1]',t);
+f_biot = interp1qr([-1000 -525 -520 0]',[0 0 1 1]',t_geol);
+% f_biot = interp1qr([-1000 -525 -520 0]',[1 1 1 1]',t_geol);
 CB = interp1qr([0 1]',[1.2 1]',f_biot) ;
 
 %%%%% carbon burial
@@ -434,7 +468,7 @@ dy(17) = gypw*delta_GYP + pyrw*delta_PYR -mgsb*d34s_S - mpsb*( delta_mpsb ) + gy
 
 %%%% fluxes
 Sr_granw = pars.k_Sr_granw *( granw / pars.k_granw ) ;
-Sr_basw = pars.k_Sr_basw *( basw / pars.k_basw ) ;
+Sr_basw = pars.k_Sr_basw *( basw / pars.k_basw) ;
 Sr_sedw = pars.k_Sr_sedw *( carbw / pars.k_carbw ) * (SSr/pars.SSr0) ;
 Sr_mantle = pars.k_Sr_mantle * DEGASS ;
 Sr_sfw = pars.k_Sr_sfw * (sfw/pars.k_sfw) * ( OSr/pars.OSr0 ) ;
@@ -547,6 +581,7 @@ if sensanal == 0
     workingstate.EVO(stepnumber,1) = EVO ;
     workingstate.CPland(stepnumber,1) = CPland_relative ;
     workingstate.Bforcing(stepnumber,1) = Bforcing ;
+    %workingstate.island_mountain_area(stepnumber,1) = island_mountain_area ;
     % workingstate.SOLAR(stepnumber,1) = SOLAR ;
     workingstate.BAS_AREA(stepnumber,1) = BAS_AREA ;
     workingstate.GRAN_AREA(stepnumber,1) = GRAN_AREA ;
@@ -570,7 +605,15 @@ if sensanal == 0
     workingstate.oxidw(stepnumber,1) = oxidw ;
     workingstate.basw(stepnumber,1) = basw ;
     workingstate.granw(stepnumber,1) = granw ;
+%     workingstate.inter_basw(stepnumber,1) = inter_basw;
+%     workingstate.island_basw(stepnumber,1) = island_basw;
+%     workingstate.inter_granw(stepnumber,1) = inter_granw ;
+%     workingstate.island_granw(stepnumber,1) = island_granw ;
     workingstate.phosw(stepnumber,1) = phosw ;
+    workingstate.IMA_P(stepnumber,1) = IMA_P ;
+    workingstate.IMA_P_high(stepnumber,1) = IMA_P_high ;
+    workingstate.IMA_P_ave(stepnumber,1) = IMA_P_ave ;
+    workingstate.IMA_P_low(stepnumber,1) = IMA_P_low ;
     workingstate.psea(stepnumber,1) = psea ;
     workingstate.nfix(stepnumber,1) = nfix ;
     workingstate.denit(stepnumber,1) = denit ;
@@ -600,7 +643,7 @@ if sensanal == 0
     workingstate.d238U_sw(stepnumber,1) = d238U_sw ;
     workingstate.d_in(stepnumber,1) = d_in ;
     %%%%%%%% print time
-    workingstate.time_myr(stepnumber,1) = t_geol ;
+    workingstate.time_myr(stepnumber,1) = t / 1e6;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -615,7 +658,7 @@ if sensanal == 1
     workingstate.CO2ppm(stepnumber,1) = RCO2*280 ;
     workingstate.mrO2(stepnumber,1) = mrO2 ;
     workingstate.T_gast(stepnumber,1) = TEMP_gast - 273 ;
-    workingstate.time_myr(stepnumber,1) = t_geol ;
+    workingstate.time_myr(stepnumber,1) = t / 1e6 ;
     workingstate.time(stepnumber,1) = t;
     workingstate.ANOX(stepnumber,1) = ANOX ;
     workingstate.DOC_res(stepnumber,1) = DOC_res ;
