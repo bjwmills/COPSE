@@ -2,7 +2,10 @@
 
 Carbon-Oxygen-Phosphorus-Sulfur-Evolution
 
-COPSE was developed by Noam Bergman in 2003. Several versions now exist. This version of the COPSE code is lighlty updated from Tostevin and Mills (2020) Interface Focus. 
+COPSE was developed by Noam Bergman in 2003. Several versions now exist. This version of the COPSE code is lighlty updated from Tostevin and Mills (2020) Interface Focus and is the most recent version of the code available (as far as I know).
+
+COPSE has largely been superceded by the SCION model, which can compute spatial surface processes. See https://github.com/bjwmills/SCION for more details.
+
 
 ## Contents:
 
